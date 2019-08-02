@@ -14,7 +14,7 @@ export class AirflowDockerBuild extends cdk.Construct {
         const buildProject = new codebuild.Project(this, "AirflowDockerBuild", {
             source: codebuild.Source.gitHub({ owner: 'bweigel', repo: 'cdk-airflow', webhook: true }),
             badge: true,
-            environment: { buildImage: codebuild.LinuxBuildImage.UBUNTU_14_04_DOCKER_18_09_0 },
+            environment: { buildImage: codebuild.LinuxBuildImage.UBUNTU_14_04_DOCKER_18_09_0, privileged: true },
             buildSpec: codebuild.BuildSpec.fromSourceFilename("lib/assets/docker-buildspec.yml"),
             environmentVariables: {
                 ECR_QUALIFIED_REPO_NAME: { value: imageRepo.repositoryUri }
