@@ -4,12 +4,13 @@ import cdk = require('@aws-cdk/core');
 import { PolicyStatement } from '@aws-cdk/aws-iam';
 
 
-
 export class AirflowDockerBuild extends cdk.Construct {
+    public readonly imageRepo: ecr.Repository
+
     constructor(scope: cdk.Construct, id: string) {
         super(scope, id);
 
-        const imageRepo = new ecr.Repository(this, "AirflowRepo", { repositoryName: 'airflow/base' })
+        this.imageRepo = new ecr.Repository(this, "AirflowRepo", { repositoryName: 'airflow/base' })
 
         const buildProject = new codebuild.Project(this, "AirflowDockerBuild", {
             source: codebuild.Source.gitHub({ owner: 'bweigel', repo: 'cdk-airflow' }),
@@ -17,13 +18,12 @@ export class AirflowDockerBuild extends cdk.Construct {
             environment: { buildImage: codebuild.LinuxBuildImage.UBUNTU_14_04_DOCKER_18_09_0, privileged: true },
             buildSpec: codebuild.BuildSpec.fromSourceFilename("assets/airflow-docker/buildspec.yml"),
             environmentVariables: {
-                ECR_QUALIFIED_REPO_NAME: { value: imageRepo.repositoryUri }
+                ECR_QUALIFIED_REPO_NAME: { value: this.imageRepo.repositoryUri }
             }
         });
 
         buildProject.addToRolePolicy(new PolicyStatement({
             actions: [
-                "ecr:GetAuthorizationToken",
                 "ecr:BatchCheckLayerAvailability",
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:GetRepositoryPolicy",
@@ -36,8 +36,14 @@ export class AirflowDockerBuild extends cdk.Construct {
                 "ecr:CompleteLayerUpload",
                 "ecr:PutImage"
             ],
-            resources: [imageRepo.repositoryArn]
+            resources: [this.imageRepo.repositoryArn]
         }))
 
+        buildProject.addToRolePolicy(new PolicyStatement({
+            actions: [
+                "ecr:GetAuthorizationToken",
+            ],
+            resources: ['*']
+        }))
     }
 }
