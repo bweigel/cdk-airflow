@@ -1,0 +1,24 @@
+version: 0.2
+
+env:
+  variables:
+    BUILD_DOCKERFILE_LOCATION: "assets/airflow-docker/Dockerfile"
+    BUILD_CONTEXT: "assets/airflow-docker"
+    TAG: "latest"
+
+
+phases:
+  pre_build:
+    commands:
+      - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+  build:
+    commands:
+      - docker build -t $ECR_QUALIFIED_REPO_NAME:$TAG -f $BUILD_DOCKERFILE_LOCATION $BUILD_CONTEXT
+  post_build:
+    commands:
+      - "export DATE_TAG=$(date +%F-%H%M%S)"
+      - "docker tag $ECR_QUALIFIED_REPO_NAME:$TAG $ECR_QUALIFIED_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - "docker tag $ECR_QUALIFIED_REPO_NAME:$TAG $ECR_QUALIFIED_REPO_NAME:$DATE_TAG"
+      - "docker push $ECR_QUALIFIED_REPO_NAME:$TAG"
+      - "docker push $ECR_QUALIFIED_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION"
+      - "docker push $ECR_QUALIFIED_REPO_NAME:$DATE_TAG
