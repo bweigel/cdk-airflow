@@ -73,7 +73,7 @@ COPY entrypoint.sh /entrypoint.sh
 COPY airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 COPY requirements.txt /requirements.txt
 
-RUN chown -R airflow: ${AIRFLOW_USER_HOME} && chmod +x /entrypoint.sh
+RUN chown -R airflow: ${AIRFLOW_USER_HOME} && chmod +x /entrypoint.sh && mkdir -p ${AIRFLOW_USER_HOME}/dags
 
 EXPOSE 8080 5555 8793
 
