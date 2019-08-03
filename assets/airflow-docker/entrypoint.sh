@@ -12,10 +12,10 @@ set -euo pipefail
 
 : "${POSTGRES_SECRET:=""}"
 : "${POSTGRES_DB:="airflow"}"
-POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq .host)
-POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq .port)
-POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq .username)
-POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq .password)
+POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq -r .host)
+POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq -r .port)
+POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq -r .username)
+POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq -r .password)
 
 
 # Defaults and back-compat
