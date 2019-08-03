@@ -56,7 +56,7 @@ RUN set -ex \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi
 
 # Install to mount S3 into container https://github.com/s3fs-fuse/s3fs-fuse
-RUN apt-get install -y s3fs
+RUN apt-get install -y s3fs jq
 
 RUN apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
