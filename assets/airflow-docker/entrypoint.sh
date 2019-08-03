@@ -2,7 +2,7 @@
 
 TRY_LOOP="20"
 
-set -euo pipefail
+set -eo pipefail
 
 : "${REDIS_HOST:="redis"}"
 : "${REDIS_PORT:="6379"}"
@@ -12,10 +12,10 @@ set -euo pipefail
 
 : "${POSTGRES_SECRET:=""}"
 : "${POSTGRES_DB:="airflow"}"
-POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq -r .host)
-POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq -r .port)
-POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq -r .username)
-POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq -r .password)
+export POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq -r .host)
+export POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq -r .port)
+export POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq -r .username)
+export POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq -r .password)
 
 
 # Defaults and back-compat
