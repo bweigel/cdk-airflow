@@ -2,20 +2,21 @@ import ecspatterns = require('@aws-cdk/aws-ecs-patterns');
 import ecr = require('@aws-cdk/aws-ecr');
 import cdk = require('@aws-cdk/core');
 
-import { ContainerImage, Cluster, ContainerDefinition, TaskDefinition, Compatibility, FargateService } from '@aws-cdk/aws-ecs';
-import { Vpc, IVpc, ISecurityGroup } from '@aws-cdk/aws-ec2';
+import { ContainerImage, Cluster, TaskDefinition, Compatibility, FargateService, Secret, AwsLogDriver } from '@aws-cdk/aws-ecs';
+import { IVpc, ISecurityGroup } from '@aws-cdk/aws-ec2';
 import { Duration, RemovalPolicy } from '@aws-cdk/core';
 import { Bucket, BlockPublicAccess, BucketEncryption } from '@aws-cdk/aws-s3';
-import { PolicyStatement, Effect, ServicePrincipal } from '@aws-cdk/aws-iam';
-import { DatabaseCluster } from '@aws-cdk/aws-rds';
+import { PolicyStatement, Effect } from '@aws-cdk/aws-iam';
+import { ISecret } from '@aws-cdk/aws-secretsmanager';
 
 export interface AirflowFargateServiceProps {
     airflowBaseImage: ecr.IRepository
     vpc: IVpc
     db: {
-        cluster: DatabaseCluster
-        username: string
+        Secret: ISecret
+        redisHost: string
     }
+
 }
 
 export class AirflowFargateService extends cdk.Construct {
@@ -26,7 +27,8 @@ export class AirflowFargateService extends cdk.Construct {
         const airflowImage = ContainerImage.fromEcrRepository(props.airflowBaseImage)
         const vpc = props.vpc;
         const cluster = new Cluster(this, "Cluster", { vpc });
-        const db = props.db;
+        const dbSecret = props.db.Secret;
+        const redisHost = props.db.redisHost
 
         const airflowS3 = new Bucket(this, "AirflowBucket", {
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -39,22 +41,21 @@ export class AirflowFargateService extends cdk.Construct {
             cluster: cluster,
             image: airflowImage,
             publicLoadBalancer: false,
+            secrets: {
+                POSTGRES_SECRET: Secret.fromSecretsManager(dbSecret),
+            },
             environment: {
                 LOAD_EX: "y", // load airflow examples? n/y
-                REDIS_HOST: "",
+                REDIS_HOST: redisHost,
                 REDIS_PASSWORD: "",
-                POSTGRES_HOST: db.cluster.clusterEndpoint.hostname,
-                POSTGRES_PORT: db.cluster.clusterEndpoint.port.toString(),
-                POSTGRES_USER: db.username,
-                POSTGRES_PASSWORD: db.cluster.secret ? db.cluster.secret.secretValue.toString() : "",
                 DAG_BUCKET: airflowS3.bucketName,
-                EXECUTOR: "Sequential"
+                EXECUTOR: "Celery"
             }
         });
 
         airflowWebserver.targetGroup.configureHealthCheck({ healthyHttpCodes: "200,302", interval: Duration.seconds(120), unhealthyThresholdCount: 5 })
 
-        this.securityGroups = airflowWebserver.service.cluster.connections.securityGroups
+        this.securityGroups = airflowWebserver.service.connections.securityGroups
         /*
         airflowWebserver.service.taskDefinition.addContainer("SchedulerContainer", {
             command: ["scheduler"],
@@ -119,16 +120,23 @@ export class AirflowFargateService extends cdk.Construct {
             command: ["worker"],
             essential: true,
             image: airflowImage,
+            secrets: {
+                POSTGRES_SECRET: Secret.fromSecretsManager(dbSecret),
+            },
             environment: {
                 FERNET_KEY: "",
+                REDIS_HOST: redisHost,
                 EXECUTOR: "Celery"
-            }
+            },
+            logging: new AwsLogDriver({streamPrefix: "airflow-worker"})
         });
 
         const workerService = new FargateService(this, "Worker", {
             cluster: cluster,
-            taskDefinition: workerTask,
+            taskDefinition: workerTask
         });
+
+        this.securityGroups = this.securityGroups.concat(workerService.connections.securityGroups)
 
         /* Define Scheduler */
 

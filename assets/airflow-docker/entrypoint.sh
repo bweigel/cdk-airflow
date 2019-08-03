@@ -11,7 +11,7 @@ set -eo pipefail
 : "${DAG_BUCKET:=""}"
 
 : "${POSTGRES_SECRET:=""}"
-: "${POSTGRES_DB:="postgres"}"
+: "${POSTGRES_DB:="postgres"}" # use default aurora database
 export POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq -r .host)
 export POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq -r .port)
 export POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq -r .username)
