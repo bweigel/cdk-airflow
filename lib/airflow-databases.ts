@@ -4,7 +4,7 @@ import rds = require('@aws-cdk/aws-rds');
 import elasticache = require('@aws-cdk/aws-elasticache');
 
 import { IVpc, InstanceType, InstanceSize, InstanceClass, ISecurityGroup, SecurityGroup } from '@aws-cdk/aws-ec2';
-import { DatabaseClusterEngine } from '@aws-cdk/aws-rds';
+import { DatabaseClusterEngine, DatabaseInstanceEngine } from '@aws-cdk/aws-rds';
 import { RemovalPolicy } from '@aws-cdk/core';
 import { ISecret } from '@aws-cdk/aws-secretsmanager';
 
@@ -16,13 +16,15 @@ export class AirflowDatabases extends cdk.Construct {
     public readonly secret: ISecret
     public readonly securityGroupId: string
     public readonly redisSecurityGroupId: string
-    public readonly auroraPort: number
+    public readonly postgresport: number | string
     public readonly redisPort: string
     public readonly redisHost: string
 
     constructor(scope: cdk.Construct, id: string, props: AirflowDatabasesProps) {
         super(scope, id);
         const vpc = props.vpc;
+
+        /* Aurora Cluster
 
         const dbcluster = new rds.DatabaseCluster(this, "PostgresCluster", {
             engine: DatabaseClusterEngine.AURORA_POSTGRESQL,
@@ -40,10 +42,21 @@ export class AirflowDatabases extends cdk.Construct {
                 parameterGroupName: "default.aurora-postgresql10"
             } as any
         });
+        */
+
+       const dbcluster = new rds.DatabaseInstance(this, "PostgresInstance", {
+           engine: DatabaseInstanceEngine.POSTGRES,
+           removalPolicy: RemovalPolicy.DESTROY,
+           masterUsername: "airflow",
+           instanceClass: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
+           vpc,
+           storageEncrypted: true,
+       });
+
 
         this.secret = dbcluster.secret as ISecret
         this.securityGroupId = dbcluster.securityGroupId
-        this.auroraPort = dbcluster.clusterEndpoint.port
+        this.postgresport = dbcluster.dbInstanceEndpointPort
 
         const redisSg = new SecurityGroup(this, "RedisSG", {
             allowAllOutbound: true,

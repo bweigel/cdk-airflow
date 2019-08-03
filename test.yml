@@ -1,0 +1,1773 @@
+Resources:
+  DockerBuildAirflowDockerBuildRoleDE17C358:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - codebuild.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DockerBuild/AirflowDockerBuild/Role/Resource
+  DockerBuildAirflowDockerBuildRoleDefaultPolicy24BF5FD4:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":logs:"
+                    - Ref: AWS::Region
+                    - ":"
+                    - Ref: AWS::AccountId
+                    - :log-group:/aws/codebuild/
+                    - Ref: DockerBuildAirflowDockerBuild3B99AA21
+              - Fn::Join:
+                  - ""
+                  - - "arn:"
+                    - Ref: AWS::Partition
+                    - ":logs:"
+                    - Ref: AWS::Region
+                    - ":"
+                    - Ref: AWS::AccountId
+                    - :log-group:/aws/codebuild/
+                    - Ref: DockerBuildAirflowDockerBuild3B99AA21
+                    - :*
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:DescribeRepositories
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - ecr:BatchGetImage
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
+              - ecr:PutImage
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ecr:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :repository/airflow/base
+          - Action: ecr:GetAuthorizationToken
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      PolicyName: DockerBuildAirflowDockerBuildRoleDefaultPolicy24BF5FD4
+      Roles:
+        - Ref: DockerBuildAirflowDockerBuildRoleDE17C358
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DockerBuild/AirflowDockerBuild/Role/DefaultPolicy/Resource
+  DockerBuildAirflowDockerBuild3B99AA21:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ECR_QUALIFIED_REPO_NAME
+            Type: PLAINTEXT
+            Value:
+              Fn::Join:
+                - ""
+                - - Fn::Select:
+                      - 4
+                      - Fn::Split:
+                          - ":"
+                          - Fn::Join:
+                              - ""
+                              - - "arn:"
+                                - Ref: AWS::Partition
+                                - ":ecr:"
+                                - Ref: AWS::Region
+                                - ":"
+                                - Ref: AWS::AccountId
+                                - :repository/airflow/base
+                  - .dkr.ecr.
+                  - Fn::Select:
+                      - 3
+                      - Fn::Split:
+                          - ":"
+                          - Fn::Join:
+                              - ""
+                              - - "arn:"
+                                - Ref: AWS::Partition
+                                - ":ecr:"
+                                - Ref: AWS::Region
+                                - ":"
+                                - Ref: AWS::AccountId
+                                - :repository/airflow/base
+                  - "."
+                  - Ref: AWS::URLSuffix
+                  - /airflow/base
+        Image: aws/codebuild/docker:18.09.0
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole:
+        Fn::GetAtt:
+          - DockerBuildAirflowDockerBuildRoleDE17C358
+          - Arn
+      Source:
+        BuildSpec: assets/airflow-docker/buildspec.yml
+        Location: https://github.com/bweigel/cdk-airflow.git
+        ReportBuildStatus: true
+        Type: GITHUB
+      BadgeEnabled: true
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DockerBuild/AirflowDockerBuild/Resource
+  VpcC3027511:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/Resource
+  VpcPublicSubnet1Subnet8E8DEDC0:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/18
+      VpcId:
+        Ref: VpcC3027511
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PublicSubnet1
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/Subnet
+  VpcPublicSubnet1RouteTable431DD755:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VpcC3027511
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PublicSubnet1
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/RouteTable
+  VpcPublicSubnet1RouteTableAssociationBBCB7AA1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VpcPublicSubnet1RouteTable431DD755
+      SubnetId:
+        Ref: VpcPublicSubnet1Subnet8E8DEDC0
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/RouteTableAssociation
+  VpcPublicSubnet1DefaultRoute0F5C6C43:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VpcPublicSubnet1RouteTable431DD755
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: VpcIGW488B0FEB
+    DependsOn:
+      - VpcVPCGW42EC8516
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/DefaultRoute
+  VpcPublicSubnet1EIP2293BAA3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/EIP
+  VpcPublicSubnet1NATGateway8185E366:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - VpcPublicSubnet1EIP2293BAA3
+          - AllocationId
+      SubnetId:
+        Ref: VpcPublicSubnet1Subnet8E8DEDC0
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PublicSubnet1
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet1/NATGateway
+  VpcPublicSubnet2SubnetA811849C:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.64.0/18
+      VpcId:
+        Ref: VpcC3027511
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PublicSubnet2
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet2/Subnet
+  VpcPublicSubnet2RouteTable77FB35FC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VpcC3027511
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PublicSubnet2
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet2/RouteTable
+  VpcPublicSubnet2RouteTableAssociation3AFE92E6:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VpcPublicSubnet2RouteTable77FB35FC
+      SubnetId:
+        Ref: VpcPublicSubnet2SubnetA811849C
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet2/RouteTableAssociation
+  VpcPublicSubnet2DefaultRouteD629179A:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VpcPublicSubnet2RouteTable77FB35FC
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: VpcIGW488B0FEB
+    DependsOn:
+      - VpcVPCGW42EC8516
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PublicSubnet2/DefaultRoute
+  VpcPrivateSubnet1Subnet67A4DBCB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.128.0/18
+      VpcId:
+        Ref: VpcC3027511
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1/Subnet
+  VpcPrivateSubnet1RouteTable901BAEEE:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VpcC3027511
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1/RouteTable
+  VpcPrivateSubnet1RouteTableAssociation2BC202CB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VpcPrivateSubnet1RouteTable901BAEEE
+      SubnetId:
+        Ref: VpcPrivateSubnet1Subnet67A4DBCB
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1/RouteTableAssociation
+  VpcPrivateSubnet1DefaultRouteF704DE9F:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VpcPrivateSubnet1RouteTable901BAEEE
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: VpcPublicSubnet1NATGateway8185E366
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet1/DefaultRoute
+  VpcPrivateSubnet2SubnetC8EB537D:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.192.0/18
+      VpcId:
+        Ref: VpcC3027511
+      AvailabilityZone:
+        Fn::Select:
+          - 1
+          - Fn::GetAZs: ""
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2/Subnet
+  VpcPrivateSubnet2RouteTable1EA00C9D:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VpcC3027511
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2/RouteTable
+  VpcPrivateSubnet2RouteTableAssociationFA51927B:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: VpcPrivateSubnet2RouteTable1EA00C9D
+      SubnetId:
+        Ref: VpcPrivateSubnet2SubnetC8EB537D
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2/RouteTableAssociation
+  VpcPrivateSubnet2DefaultRoute5FAC9901:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: VpcPrivateSubnet2RouteTable1EA00C9D
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId:
+        Ref: VpcPublicSubnet1NATGateway8185E366
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/PrivateSubnet2/DefaultRoute
+  VpcIGW488B0FEB:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CdkAirflowStack/Vpc/Vpc
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/IGW
+  VpcVPCGW42EC8516:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VpcC3027511
+      InternetGatewayId:
+        Ref: VpcIGW488B0FEB
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Vpc/Vpc/VPCGW
+  DbPostgresInstanceSubnetGroup2ADB96BE:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for PostgresInstance database
+      SubnetIds:
+        - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+        - Ref: VpcPrivateSubnet2SubnetC8EB537D
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/PostgresInstance/SubnetGroup
+  DbPostgresInstanceSecurityGroupCFC0E365:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for PostgresInstance database
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/PostgresInstance/SecurityGroup/Resource
+  DbPostgresInstanceSecretD4E3516A:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      GenerateSecretString:
+        ExcludeCharacters: '"@/\'
+        GenerateStringKey: password
+        PasswordLength: 30
+        SecretStringTemplate: '{"username":"airflow"}'
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/PostgresInstance/Secret/Resource
+  DbPostgresInstanceSecretAttachedSecret04050689:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId:
+        Ref: DbPostgresInstanceSecretD4E3516A
+      TargetId:
+        Ref: DbPostgresInstanceFCC0BF54
+      TargetType: AWS::RDS::DBInstance
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/PostgresInstance/Secret/AttachedSecret/Resource
+  DbPostgresInstanceFCC0BF54:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: "100"
+      CopyTagsToSnapshot: true
+      DBSubnetGroupName:
+        Ref: DbPostgresInstanceSubnetGroup2ADB96BE
+      DeletionProtection: true
+      Engine: postgres
+      MasterUsername:
+        Fn::Join:
+          - ""
+          - - "{{resolve:secretsmanager:"
+            - Ref: DbPostgresInstanceSecretD4E3516A
+            - :SecretString:username::}}
+      MasterUserPassword:
+        Fn::Join:
+          - ""
+          - - "{{resolve:secretsmanager:"
+            - Ref: DbPostgresInstanceSecretD4E3516A
+            - :SecretString:password::}}
+      StorageEncrypted: true
+      StorageType: gp2
+      VPCSecurityGroups:
+        - Fn::GetAtt:
+            - DbPostgresInstanceSecurityGroupCFC0E365
+            - GroupId
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/PostgresInstance/Resource
+  DbRedisSGA089FC76:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: for Redis Replication Group
+      GroupName: RedisSG
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/RedisSG/Resource
+  DbRedisSubnet1EAF64A4:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: RedisSubnetGroup
+      SubnetIds:
+        - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+        - Ref: VpcPrivateSubnet2SubnetC8EB537D
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/RedisSubnet
+  DbRedisAE421E17:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: Redis for Airflow
+      AtRestEncryptionEnabled: true
+      AutomaticFailoverEnabled: false
+      AutoMinorVersionUpgrade: true
+      CacheNodeType: cache.t2.micro
+      CacheSubnetGroupName:
+        Ref: DbRedisSubnet1EAF64A4
+      Engine: redis
+      EngineVersion: 4.0.10
+      NumCacheClusters: 1
+      SecurityGroupIds:
+        - Fn::GetAtt:
+            - DbRedisSGA089FC76
+            - GroupId
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/Db/Redis
+  DbSgfromCdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8IndirectPort7ADDB149:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbPostgresInstanceSecurityGroupCFC0E365
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DbSg/from CdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8:{IndirectPort}
+  DbSgfromCdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1BIndirectPort648D0819:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbPostgresInstanceSecurityGroupCFC0E365
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerServiceSecurityGroupB5A1678D
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DbSg/from CdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B:{IndirectPort}
+  DbSgfromCdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5AIndirectPort05CAC91F:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5A:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbPostgresInstanceSecurityGroupCFC0E365
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerWorkerSecurityGroup865D38A3
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DbSg/from CdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5A:{IndirectPort}
+  DbSgfromCdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CDIndirectPort967CC410:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CD:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbPostgresInstanceSecurityGroupCFC0E365
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerSchedulerSecurityGroupE45AE5CB
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbPostgresInstanceFCC0BF54
+          - Endpoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/DbSg/from CdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CD:{IndirectPort}
+  RedisSgfromCdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8IndirectPort76742D55:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbRedisSGA089FC76
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/RedisSg/from CdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8:{IndirectPort}
+  RedisSgfromCdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1BIndirectPort7FD5FA96:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbRedisSGA089FC76
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerServiceSecurityGroupB5A1678D
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/RedisSg/from CdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B:{IndirectPort}
+  RedisSgfromCdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5AIndirectPort822B8552:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5A:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbRedisSGA089FC76
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerWorkerSecurityGroup865D38A3
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/RedisSg/from CdkAirflowStackAirflowServerWorkerSecurityGroup3CB0BB5A:{IndirectPort}
+  RedisSgfromCdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CDIndirectPort2F41929B:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: from CdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CD:{IndirectPort}
+      FromPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+      GroupId:
+        Fn::GetAtt:
+          - DbRedisSGA089FC76
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerSchedulerSecurityGroupE45AE5CB
+          - GroupId
+      ToPort:
+        Fn::GetAtt:
+          - DbRedisAE421E17
+          - PrimaryEndPoint.Port
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/RedisSg/from CdkAirflowStackAirflowServerSchedulerSecurityGroup4A9997CD:{IndirectPort}
+  AirflowServerCluster7020D075:
+    Type: AWS::ECS::Cluster
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/Cluster/Resource
+  AirflowServerAirflowBucket5E552C81:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/AirflowBucket/Resource
+  AirflowServerairflowwebserverLBCC1BFBDA:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes: []
+      Scheme: internal
+      SecurityGroups:
+        - Fn::GetAtt:
+            - AirflowServerairflowwebserverLBSecurityGroup4454F348
+            - GroupId
+      Subnets:
+        - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+        - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      Type: application
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/LB/Resource
+  AirflowServerairflowwebserverLBSecurityGroup4454F348:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Automatically created Security Group for ELB CdkAirflowStackAirflowServerairflowwebserverLB1641A9D5
+      SecurityGroupEgress: []
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow from anyone on port 80
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/LB/SecurityGroup/Resource
+  AirflowServerairflowwebserverLBSecurityGrouptoCdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF88080264DAB66:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverLBSecurityGroup4454F348
+          - GroupId
+      IpProtocol: tcp
+      Description: Load balancer to target
+      DestinationSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87
+          - GroupId
+      FromPort: 8080
+      ToPort: 8080
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/LB/SecurityGroup/to CdkAirflowStackAirflowServerairflowwebserverServiceSecurityGroupF3CACEF8:8080
+  AirflowServerairflowwebserverLBPublicListenerAEDC94D4:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn:
+            Ref: AirflowServerairflowwebserverLBPublicListenerECSGroupD116CF0A
+          Type: forward
+      LoadBalancerArn:
+        Ref: AirflowServerairflowwebserverLBCC1BFBDA
+      Port: 80
+      Protocol: HTTP
+      Certificates: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/LB/PublicListener/Resource
+  AirflowServerairflowwebserverLBPublicListenerECSGroupD116CF0A:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      Matcher:
+        HttpCode: 200,302
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes: []
+      Targets: []
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/LB/PublicListener/ECSGroup/Resource
+  AirflowServerairflowwebserverTaskDefTaskRoleC7FF19AF:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/TaskRole/Resource
+  AirflowServerairflowwebserverTaskDefTaskRoleDefaultPolicy819166E8:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:HeadBucket
+              - s3:ListBucket*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:PutObject*
+              - s3:DeleteObject*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - AirflowServerAirflowBucket5E552C81
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - AirflowServerAirflowBucket5E552C81
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+      PolicyName: AirflowServerairflowwebserverTaskDefTaskRoleDefaultPolicy819166E8
+      Roles:
+        - Ref: AirflowServerairflowwebserverTaskDefTaskRoleC7FF19AF
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/TaskRole/DefaultPolicy/Resource
+  AirflowServerairflowwebserverTaskDefAFE91B79:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Environment:
+            - Name: LOAD_EX
+              Value: "y"
+            - Name: REDIS_HOST
+              Value:
+                Fn::GetAtt:
+                  - DbRedisAE421E17
+                  - PrimaryEndPoint.Address
+            - Name: REDIS_PASSWORD
+              Value: ""
+            - Name: DAG_BUCKET
+              Value:
+                Ref: AirflowServerAirflowBucket5E552C81
+            - Name: EXECUTOR
+              Value: Celery
+          Essential: true
+          Image:
+            Fn::Join:
+              - ""
+              - - Fn::Select:
+                    - 4
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - .dkr.ecr.
+                - Fn::Select:
+                    - 3
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - "."
+                - Ref: AWS::URLSuffix
+                - /airflow/base:latest
+          Links: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: AirflowServerairflowwebserverTaskDefwebLogGroup582A97B2
+              awslogs-stream-prefix: airflow-webserver
+              awslogs-region:
+                Ref: AWS::Region
+          MountPoints: []
+          Name: web
+          PortMappings:
+            - ContainerPort: 8080
+              Protocol: tcp
+          Secrets:
+            - Name: POSTGRES_SECRET
+              ValueFrom:
+                Ref: DbPostgresInstanceSecretAttachedSecret04050689
+          Ulimits: []
+          VolumesFrom: []
+      Cpu: "256"
+      ExecutionRoleArn:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverTaskDefExecutionRole1F636DD7
+          - Arn
+      Family: CdkAirflowStackAirflowServerairflowwebserverTaskDefD2E4850B
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverTaskDefTaskRoleC7FF19AF
+          - Arn
+      Volumes: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/Resource
+  AirflowServerairflowwebserverTaskDefwebLogGroup582A97B2:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/web/LogGroup/Resource
+  AirflowServerairflowwebserverTaskDefExecutionRole1F636DD7:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/ExecutionRole/Resource
+  AirflowServerairflowwebserverTaskDefExecutionRoleDefaultPolicy98C7A8A8:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ecr:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :repository/airflow/base
+          - Action: ecr:GetAuthorizationToken
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - AirflowServerairflowwebserverTaskDefwebLogGroup582A97B2
+                - Arn
+          - Action: secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource:
+              Ref: DbPostgresInstanceSecretAttachedSecret04050689
+        Version: "2012-10-17"
+      PolicyName: AirflowServerairflowwebserverTaskDefExecutionRoleDefaultPolicy98C7A8A8
+      Roles:
+        - Ref: AirflowServerairflowwebserverTaskDefExecutionRole1F636DD7
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/TaskDef/ExecutionRole/DefaultPolicy/Resource
+  AirflowServerairflowwebserverService370AA545:
+    Type: AWS::ECS::Service
+    Properties:
+      TaskDefinition:
+        Ref: AirflowServerairflowwebserverTaskDefAFE91B79
+      Cluster:
+        Ref: AirflowServerCluster7020D075
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 8080
+          TargetGroupArn:
+            Ref: AirflowServerairflowwebserverLBPublicListenerECSGroupD116CF0A
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::GetAtt:
+                - AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87
+                - GroupId
+          Subnets:
+            - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+            - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      ServiceRegistries: []
+    DependsOn:
+      - AirflowServerairflowwebserverLBPublicListenerECSGroupD116CF0A
+      - AirflowServerairflowwebserverLBPublicListenerAEDC94D4
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/Service/Service
+  AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CdkAirflowStack/AirflowServer/airflow-webserver/Service/SecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/Service/SecurityGroup/Resource
+  AirflowServerairflowwebserverServiceSecurityGroupfromCdkAirflowStackAirflowServerairflowwebserverLBSecurityGroup1230FC38808049A04CD6:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: Load balancer to target
+      FromPort: 8080
+      GroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverServiceSecurityGroup1D9AAF87
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowwebserverLBSecurityGroup4454F348
+          - GroupId
+      ToPort: 8080
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-webserver/Service/SecurityGroup/from CdkAirflowStackAirflowServerairflowwebserverLBSecurityGroup1230FC38:8080
+  AirflowServerairflowflowerLB3460B089:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes: []
+      Scheme: internal
+      SecurityGroups:
+        - Fn::GetAtt:
+            - AirflowServerairflowflowerLBSecurityGroupA88EF9F2
+            - GroupId
+      Subnets:
+        - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+        - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      Type: application
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/LB/Resource
+  AirflowServerairflowflowerLBSecurityGroupA88EF9F2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Automatically created Security Group for ELB CdkAirflowStackAirflowServerairflowflowerLBC61F5871
+      SecurityGroupEgress: []
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow from anyone on port 80
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/LB/SecurityGroup/Resource
+  AirflowServerairflowflowerLBSecurityGrouptoCdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B5555A0FDBD9C:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerLBSecurityGroupA88EF9F2
+          - GroupId
+      IpProtocol: tcp
+      Description: Load balancer to target
+      DestinationSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerServiceSecurityGroupB5A1678D
+          - GroupId
+      FromPort: 5555
+      ToPort: 5555
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/LB/SecurityGroup/to CdkAirflowStackAirflowServerairflowflowerServiceSecurityGroupC5D38B1B:5555
+  AirflowServerairflowflowerLBPublicListener48E90BEA:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn:
+            Ref: AirflowServerairflowflowerLBPublicListenerECSGroupFD33C078
+          Type: forward
+      LoadBalancerArn:
+        Ref: AirflowServerairflowflowerLB3460B089
+      Port: 80
+      Protocol: HTTP
+      Certificates: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/LB/PublicListener/Resource
+  AirflowServerairflowflowerLBPublicListenerECSGroupFD33C078:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 120
+      Matcher:
+        HttpCode: 200,302
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes: []
+      Targets: []
+      TargetType: ip
+      UnhealthyThresholdCount: 5
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/LB/PublicListener/ECSGroup/Resource
+  AirflowServerairflowflowerTaskDefTaskRole687D24BD:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/TaskDef/TaskRole/Resource
+  AirflowServerairflowflowerTaskDefC32461E7:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - flower
+          Environment:
+            - Name: EXECUTOR
+              Value: Celery
+            - Name: REDIS_HOST
+              Value:
+                Fn::GetAtt:
+                  - DbRedisAE421E17
+                  - PrimaryEndPoint.Address
+            - Name: REDIS_PASSWORD
+              Value: ""
+          Essential: true
+          Image:
+            Fn::Join:
+              - ""
+              - - Fn::Select:
+                    - 4
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - .dkr.ecr.
+                - Fn::Select:
+                    - 3
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - "."
+                - Ref: AWS::URLSuffix
+                - /airflow/base:latest
+          Links: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: AirflowServerairflowflowerTaskDefwebLogGroup416AED9C
+              awslogs-stream-prefix: airflow-flower
+              awslogs-region:
+                Ref: AWS::Region
+          MountPoints: []
+          Name: web
+          PortMappings:
+            - ContainerPort: 5555
+              Protocol: tcp
+          Ulimits: []
+          VolumesFrom: []
+      Cpu: "256"
+      ExecutionRoleArn:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerTaskDefExecutionRoleFCBD5DC4
+          - Arn
+      Family: CdkAirflowStackAirflowServerairflowflowerTaskDef33B80144
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerTaskDefTaskRole687D24BD
+          - Arn
+      Volumes: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/TaskDef/Resource
+  AirflowServerairflowflowerTaskDefwebLogGroup416AED9C:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/TaskDef/web/LogGroup/Resource
+  AirflowServerairflowflowerTaskDefExecutionRoleFCBD5DC4:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/TaskDef/ExecutionRole/Resource
+  AirflowServerairflowflowerTaskDefExecutionRoleDefaultPolicy5157C235:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ecr:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :repository/airflow/base
+          - Action: ecr:GetAuthorizationToken
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - AirflowServerairflowflowerTaskDefwebLogGroup416AED9C
+                - Arn
+        Version: "2012-10-17"
+      PolicyName: AirflowServerairflowflowerTaskDefExecutionRoleDefaultPolicy5157C235
+      Roles:
+        - Ref: AirflowServerairflowflowerTaskDefExecutionRoleFCBD5DC4
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/TaskDef/ExecutionRole/DefaultPolicy/Resource
+  AirflowServerairflowflowerService78F00D6B:
+    Type: AWS::ECS::Service
+    Properties:
+      TaskDefinition:
+        Ref: AirflowServerairflowflowerTaskDefC32461E7
+      Cluster:
+        Ref: AirflowServerCluster7020D075
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 60
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 5555
+          TargetGroupArn:
+            Ref: AirflowServerairflowflowerLBPublicListenerECSGroupFD33C078
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::GetAtt:
+                - AirflowServerairflowflowerServiceSecurityGroupB5A1678D
+                - GroupId
+          Subnets:
+            - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+            - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      ServiceRegistries: []
+    DependsOn:
+      - AirflowServerairflowflowerLBPublicListenerECSGroupFD33C078
+      - AirflowServerairflowflowerLBPublicListener48E90BEA
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/Service/Service
+  AirflowServerairflowflowerServiceSecurityGroupB5A1678D:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CdkAirflowStack/AirflowServer/airflow-flower/Service/SecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/Service/SecurityGroup/Resource
+  AirflowServerairflowflowerServiceSecurityGroupfromCdkAirflowStackAirflowServerairflowflowerLBSecurityGroup653E4110555525433A86:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      Description: Load balancer to target
+      FromPort: 5555
+      GroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerServiceSecurityGroupB5A1678D
+          - GroupId
+      SourceSecurityGroupId:
+        Fn::GetAtt:
+          - AirflowServerairflowflowerLBSecurityGroupA88EF9F2
+          - GroupId
+      ToPort: 5555
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/airflow-flower/Service/SecurityGroup/from CdkAirflowStackAirflowServerairflowflowerLBSecurityGroup653E4110:5555
+  AirflowServerWorkerTaskTaskRole235BC363:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/WorkerTask/TaskRole/Resource
+  AirflowServerWorkerTaskF92C6C7E:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - worker
+          Environment:
+            - Name: FERNET_KEY
+              Value: ""
+            - Name: REDIS_HOST
+              Value:
+                Fn::GetAtt:
+                  - DbRedisAE421E17
+                  - PrimaryEndPoint.Address
+            - Name: EXECUTOR
+              Value: Celery
+          Essential: true
+          Image:
+            Fn::Join:
+              - ""
+              - - Fn::Select:
+                    - 4
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - .dkr.ecr.
+                - Fn::Select:
+                    - 3
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - "."
+                - Ref: AWS::URLSuffix
+                - /airflow/base:latest
+          Links: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: AirflowServerWorkerTaskWorkerContainerLogGroup763B8698
+              awslogs-stream-prefix: airflow-worker
+              awslogs-region:
+                Ref: AWS::Region
+          MountPoints: []
+          Name: WorkerContainer
+          PortMappings: []
+          Secrets:
+            - Name: POSTGRES_SECRET
+              ValueFrom:
+                Ref: DbPostgresInstanceSecretAttachedSecret04050689
+          Ulimits: []
+          VolumesFrom: []
+      Cpu: "256"
+      ExecutionRoleArn:
+        Fn::GetAtt:
+          - AirflowServerWorkerTaskExecutionRole0F273F15
+          - Arn
+      Family: CdkAirflowStackAirflowServerWorkerTaskCEBFEE94
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Fn::GetAtt:
+          - AirflowServerWorkerTaskTaskRole235BC363
+          - Arn
+      Volumes: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/WorkerTask/Resource
+  AirflowServerWorkerTaskWorkerContainerLogGroup763B8698:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/WorkerTask/WorkerContainer/LogGroup/Resource
+  AirflowServerWorkerTaskExecutionRole0F273F15:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/WorkerTask/ExecutionRole/Resource
+  AirflowServerWorkerTaskExecutionRoleDefaultPolicy1A60C04E:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ecr:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :repository/airflow/base
+          - Action: ecr:GetAuthorizationToken
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - AirflowServerWorkerTaskWorkerContainerLogGroup763B8698
+                - Arn
+          - Action: secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource:
+              Ref: DbPostgresInstanceSecretAttachedSecret04050689
+        Version: "2012-10-17"
+      PolicyName: AirflowServerWorkerTaskExecutionRoleDefaultPolicy1A60C04E
+      Roles:
+        - Ref: AirflowServerWorkerTaskExecutionRole0F273F15
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/WorkerTask/ExecutionRole/DefaultPolicy/Resource
+  AirflowServerWorkerServiceF892C128:
+    Type: AWS::ECS::Service
+    Properties:
+      TaskDefinition:
+        Ref: AirflowServerWorkerTaskF92C6C7E
+      Cluster:
+        Ref: AirflowServerCluster7020D075
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers: []
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::GetAtt:
+                - AirflowServerWorkerSecurityGroup865D38A3
+                - GroupId
+          Subnets:
+            - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+            - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      ServiceRegistries: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/Worker/Service
+  AirflowServerWorkerSecurityGroup865D38A3:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CdkAirflowStack/AirflowServer/Worker/SecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/Worker/SecurityGroup/Resource
+  AirflowServerSchedulerTaskTaskRole3B042DF3:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/SchedulerTask/TaskRole/Resource
+  AirflowServerSchedulerTaskA6DD41CA:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - scheduler
+          Environment:
+            - Name: LOAD_EX
+              Value: "y"
+            - Name: FERNET_KEY
+              Value: ""
+            - Name: REDIS_HOST
+              Value:
+                Fn::GetAtt:
+                  - DbRedisAE421E17
+                  - PrimaryEndPoint.Address
+            - Name: DAG_BUCKET
+              Value:
+                Ref: AirflowServerAirflowBucket5E552C81
+            - Name: EXECUTOR
+              Value: Celery
+          Essential: true
+          Image:
+            Fn::Join:
+              - ""
+              - - Fn::Select:
+                    - 4
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - .dkr.ecr.
+                - Fn::Select:
+                    - 3
+                    - Fn::Split:
+                        - ":"
+                        - Fn::Join:
+                            - ""
+                            - - "arn:"
+                              - Ref: AWS::Partition
+                              - ":ecr:"
+                              - Ref: AWS::Region
+                              - ":"
+                              - Ref: AWS::AccountId
+                              - :repository/airflow/base
+                - "."
+                - Ref: AWS::URLSuffix
+                - /airflow/base:latest
+          Links: []
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: AirflowServerSchedulerTaskSchedulerContainerLogGroup096E1AFF
+              awslogs-stream-prefix: airflow-scheduler
+              awslogs-region:
+                Ref: AWS::Region
+          MountPoints: []
+          Name: SchedulerContainer
+          PortMappings: []
+          Secrets:
+            - Name: POSTGRES_SECRET
+              ValueFrom:
+                Ref: DbPostgresInstanceSecretAttachedSecret04050689
+          Ulimits: []
+          VolumesFrom: []
+      Cpu: "256"
+      ExecutionRoleArn:
+        Fn::GetAtt:
+          - AirflowServerSchedulerTaskExecutionRoleD16DC73F
+          - Arn
+      Family: CdkAirflowStackAirflowServerSchedulerTask0F5C0B3B
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn:
+        Fn::GetAtt:
+          - AirflowServerSchedulerTaskTaskRole3B042DF3
+          - Arn
+      Volumes: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/SchedulerTask/Resource
+  AirflowServerSchedulerTaskSchedulerContainerLogGroup096E1AFF:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/SchedulerTask/SchedulerContainer/LogGroup/Resource
+  AirflowServerSchedulerTaskExecutionRoleD16DC73F:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                Fn::Join:
+                  - ""
+                  - - ecs-tasks.
+                    - Ref: AWS::URLSuffix
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/SchedulerTask/ExecutionRole/Resource
+  AirflowServerSchedulerTaskExecutionRoleDefaultPolicy8D74D2CF:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:"
+                  - Ref: AWS::Partition
+                  - ":ecr:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :repository/airflow/base
+          - Action: ecr:GetAuthorizationToken
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Effect: Allow
+            Resource:
+              Fn::GetAtt:
+                - AirflowServerSchedulerTaskSchedulerContainerLogGroup096E1AFF
+                - Arn
+          - Action: secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource:
+              Ref: DbPostgresInstanceSecretAttachedSecret04050689
+        Version: "2012-10-17"
+      PolicyName: AirflowServerSchedulerTaskExecutionRoleDefaultPolicy8D74D2CF
+      Roles:
+        - Ref: AirflowServerSchedulerTaskExecutionRoleD16DC73F
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/SchedulerTask/ExecutionRole/DefaultPolicy/Resource
+  AirflowServerSchedulerService4FD822A8:
+    Type: AWS::ECS::Service
+    Properties:
+      TaskDefinition:
+        Ref: AirflowServerSchedulerTaskA6DD41CA
+      Cluster:
+        Ref: AirflowServerCluster7020D075
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers: []
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::GetAtt:
+                - AirflowServerSchedulerSecurityGroupE45AE5CB
+                - GroupId
+          Subnets:
+            - Ref: VpcPrivateSubnet1Subnet67A4DBCB
+            - Ref: VpcPrivateSubnet2SubnetC8EB537D
+      ServiceRegistries: []
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/Scheduler/Service
+  AirflowServerSchedulerSecurityGroupE45AE5CB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CdkAirflowStack/AirflowServer/Scheduler/SecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress: []
+      VpcId:
+        Ref: VpcC3027511
+    Metadata:
+      aws:cdk:path: CdkAirflowStack/AirflowServer/Scheduler/SecurityGroup/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Modules: aws-cdk=1.3.0,@aws-cdk/assets=1.3.0,@aws-cdk/aws-applicationautoscaling=1.3.0,@aws-cdk/aws-autoscaling=1.3.0,@aws-cdk/aws-autoscaling-common=1.3.0,@aws-cdk/aws-autoscaling-hooktargets=1.3.0,@aws-cdk/aws-cloudformation=1.3.0,@aws-cdk/aws-cloudwatch=1.3.0,@aws-cdk/aws-codebuild=1.3.0,@aws-cdk/aws-ec2=1.3.0,@aws-cdk/aws-ecr=1.3.0,@aws-cdk/aws-ecr-assets=1.3.0,@aws-cdk/aws-ecs=1.3.0,@aws-cdk/aws-ecs-patterns=1.3.0,@aws-cdk/aws-elasticache=1.3.0,@aws-cdk/aws-elasticloadbalancingv2=1.3.0,@aws-cdk/aws-events=1.3.0,@aws-cdk/aws-events-targets=1.3.0,@aws-cdk/aws-iam=1.3.0,@aws-cdk/aws-kms=1.3.0,@aws-cdk/aws-lambda=1.3.0,@aws-cdk/aws-logs=1.3.0,@aws-cdk/aws-rds=1.3.0,@aws-cdk/aws-route53=1.3.0,@aws-cdk/aws-route53-targets=1.3.0,@aws-cdk/aws-s3=1.3.0,@aws-cdk/aws-s3-assets=1.3.0,@aws-cdk/aws-sam=1.3.0,@aws-cdk/aws-secretsmanager=1.3.0,@aws-cdk/aws-servicediscovery=1.3.0,@aws-cdk/aws-sns=1.3.0,@aws-cdk/aws-sns-subscriptions=1.3.0,@aws-cdk/aws-sqs=1.3.0,@aws-cdk/aws-ssm=1.3.0,@aws-cdk/core=1.3.0,@aws-cdk/custom-resources=1.3.0,@aws-cdk/cx-api=1.3.0,@aws-cdk/region-info=1.3.0,jsii-runtime=node.js/v10.15.0
+Outputs:
+  AirflowServerairflowwebserverLoadBalancerDNS9BC93AC7:
+    Value:
+      Fn::GetAtt:
+        - AirflowServerairflowwebserverLBCC1BFBDA
+        - DNSName
+  AirflowServerairflowflowerLoadBalancerDNS8F19AB88:
+    Value:
+      Fn::GetAtt:
+        - AirflowServerairflowflowerLB3460B089
+        - DNSName
+

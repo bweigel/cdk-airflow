@@ -26,7 +26,7 @@ export class CdkAirflowStack extends cdk.Stack {
     });
 
     webserver.securityGroups.forEach((sg, i) => {
-      dbSg.addIngressRule(sg, Port.tcp(db.auroraPort))
+      dbSg.addIngressRule(sg, Port.tcp(db.postgresport as unknown as number))
       redisSg.addIngressRule(sg, Port.tcp(db.redisPort as unknown as number))
     });
 
