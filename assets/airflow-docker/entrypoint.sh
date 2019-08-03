@@ -10,11 +10,13 @@ set -euo pipefail
 
 : "${DAG_BUCKET:=""}"
 
-: "${POSTGRES_HOST:="postgres"}"
-: "${POSTGRES_PORT:="5432"}"
-: "${POSTGRES_USER:="airflow"}"
-: "${POSTGRES_PASSWORD:="airflow"}"
+: "${POSTGRES_SECRET:=""}"
 : "${POSTGRES_DB:="airflow"}"
+POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq .host)
+POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq .port)
+POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq .username)
+POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq .password)
+
 
 # Defaults and back-compat
 : "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
