@@ -11,7 +11,7 @@ set -eo pipefail
 : "${DAG_BUCKET:=""}"
 
 : "${POSTGRES_SECRET:=""}"
-: "${POSTGRES_DB:="airflow"}"
+: "${POSTGRES_DB:="postgres"}"
 export POSTGRES_HOST=$(echo ${POSTGRES_SECRET} | jq -r .host)
 export POSTGRES_PORT=$(echo ${POSTGRES_SECRET} | jq -r .port)
 export POSTGRES_USER=$(echo ${POSTGRES_SECRET} | jq -r .username)
