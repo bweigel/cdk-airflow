@@ -6,6 +6,8 @@ TRY_LOOP="20"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
+: "${DAG_BUCKET:=""}"
+
 : "${POSTGRES_HOST:="postgres"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
@@ -24,6 +26,10 @@ export \
   AIRFLOW__CORE__LOAD_EXAMPLES \
   AIRFLOW__CORE__SQL_ALCHEMY_CONN \
 
+
+if [ -n "$DAG_BUCKET" ]; then
+  s3fs $DAG_BUCKET /usr/local/airflow/dags -o iam_role=auto
+fi
 
 # Load DAGs exemples (default: Yes)
 if [[ -z "$AIRFLOW__CORE__LOAD_EXAMPLES" && "${LOAD_EX:=n}" == n ]]
