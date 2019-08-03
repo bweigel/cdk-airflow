@@ -65,7 +65,8 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-RUN apt-get install s3fs    # Install to mount S3 into container https://github.com/s3fs-fuse/s3fs-fuse
+# Install to mount S3 into container https://github.com/s3fs-fuse/s3fs-fuse
+RUN apt-get install s3fs
 
 COPY entrypoint.sh /entrypoint.sh
 COPY airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
