@@ -5,12 +5,13 @@ import { PolicyStatement } from '@aws-cdk/aws-iam';
 
 
 export class AirflowDockerBuild extends cdk.Construct {
-    public readonly imageRepo: ecr.Repository
+    public readonly imageRepo: ecr.IRepository
 
     constructor(scope: cdk.Construct, id: string) {
         super(scope, id);
 
-        this.imageRepo = new ecr.Repository(this, "AirflowRepo", { repositoryName: 'airflow/base' })
+//        this.imageRepo = new ecr.Repository(this, "AirflowRepo", { repositoryName: 'airflow/base' })
+        this.imageRepo = ecr.Repository.fromRepositoryName(this, "AirflowRepo", 'airflow/base')
 
         const buildProject = new codebuild.Project(this, "AirflowDockerBuild", {
             source: codebuild.Source.gitHub({ owner: 'bweigel', repo: 'cdk-airflow' }),
