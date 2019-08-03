@@ -22,11 +22,6 @@ export POSTGRES_PASSWORD=$(echo ${POSTGRES_SECRET} | jq -r .password)
 : "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
 : "${AIRFLOW__CORE__EXECUTOR:=${EXECUTOR:-Sequential}Executor}"
 
-
-echo "##################################"
-env
-echo "##################################"
-
 export \
   AIRFLOW__CELERY__BROKER_URL \
   AIRFLOW__CELERY__RESULT_BACKEND \
@@ -37,7 +32,8 @@ export \
 
 
 if [ -n "$DAG_BUCKET" ]; then
-  s3fs $DAG_BUCKET /usr/local/airflow/dags -o iam_role=auto
+  # s3fs $DAG_BUCKET /usr/local/airflow/dags -o iam_role=auto
+  echo "Fuse device doesn't work in Fargate ..."
 fi
 
 # Load DAGs exemples (default: Yes)
