@@ -32,6 +32,7 @@ export \
 
 
 if [ -n "$DAG_BUCKET" ]; then
+  /sync_dags.sh
   # s3fs $DAG_BUCKET /usr/local/airflow/dags -o iam_role=auto
   echo "Fuse device doesn't work in Fargate ..."
 fi

@@ -80,20 +80,15 @@ export class AirflowFargateService extends cdk.Construct {
             cluster: cluster,
             image: airflowImage,
             publicLoadBalancer: false,
+            secrets: {
+                POSTGRES_SECRET: Secret.fromSecretsManager(dbSecret),
+            },
             environment: {
                 EXECUTOR: "Celery",
                 REDIS_HOST: redisHost,
                 REDIS_PASSWORD: ""
             },
         });
-
-        /*
-        celeryFlower.service.taskDefinition.defaultContainer  = new ContainerDefinition(this, "FlowerContainer", {
-            image: airflowImage,
-            command: ["flower"],
-            taskDefinition: celeryFlower.service.taskDefinition
-        });
-        */
 
         const celeryTask = celeryFlower.service.taskDefinition.node.defaultChild as CfnTaskDefinition;
         celeryTask.addPropertyOverride("ContainerDefinitions.0.Command", ["flower"])
