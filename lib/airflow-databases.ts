@@ -3,8 +3,8 @@ import ssm = require('@aws-cdk/aws-ssm');
 import rds = require('@aws-cdk/aws-rds');
 import elasticache = require('@aws-cdk/aws-elasticache');
 
-import { IVpc, InstanceType, InstanceSize, InstanceClass, ISecurityGroup, SecurityGroup } from '@aws-cdk/aws-ec2';
-import { DatabaseClusterEngine, DatabaseInstanceEngine } from '@aws-cdk/aws-rds';
+import { IVpc, InstanceType, InstanceSize, InstanceClass, SecurityGroup } from '@aws-cdk/aws-ec2';
+import { DatabaseClusterEngine, DatabaseInstanceEngine,  } from '@aws-cdk/aws-rds';
 import { RemovalPolicy } from '@aws-cdk/core';
 import { ISecret } from '@aws-cdk/aws-secretsmanager';
 
@@ -22,41 +22,42 @@ export class AirflowDatabases extends cdk.Construct {
 
     constructor(scope: cdk.Construct, id: string, props: AirflowDatabasesProps) {
         super(scope, id);
+        const useAurora = this.node.tryGetContext('useaurora') as boolean === true
         const vpc = props.vpc;
 
-        /* Aurora Cluster
+        let dbcluster;
 
-        const dbcluster = new rds.DatabaseCluster(this, "PostgresCluster", {
-            engine: DatabaseClusterEngine.AURORA_POSTGRESQL,
-            instances: 1,
-            removalPolicy: RemovalPolicy.DESTROY,
-            instanceProps: {
+        if(useAurora) {
+            dbcluster = new rds.DatabaseCluster(this, "PostgresCluster", {
+                engine: DatabaseClusterEngine.AURORA_POSTGRESQL,
+                instances: 1,
+                removalPolicy: RemovalPolicy.DESTROY,
+                instanceProps: {
+                    vpc,
+                    instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MEDIUM),
+                },
+                storageEncrypted: true,
+                masterUser: {
+                    username: "airflow"
+                },
+                parameterGroup: {
+                    parameterGroupName: "default.aurora-postgresql10"
+                } as any
+            });
+        } else {
+            dbcluster = new rds.DatabaseInstance(this, "PostgresInstance", {
+                engine: DatabaseInstanceEngine.POSTGRES,
+                removalPolicy: RemovalPolicy.DESTROY,
+                masterUsername: "airflow",
+                instanceClass: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
                 vpc,
-                instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MEDIUM),
-            },
-            storageEncrypted: true,
-            masterUser: {
-                username: "airflow"
-            },
-            parameterGroup: {
-                parameterGroupName: "default.aurora-postgresql10"
-            } as any
-        });
-        */
-
-       const dbcluster = new rds.DatabaseInstance(this, "PostgresInstance", {
-           engine: DatabaseInstanceEngine.POSTGRES,
-           removalPolicy: RemovalPolicy.DESTROY,
-           masterUsername: "airflow",
-           instanceClass: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
-           vpc,
-           storageEncrypted: true,
-       });
-
+                storageEncrypted: true,
+            });
+        }
 
         this.secret = dbcluster.secret as ISecret
         this.securityGroupId = dbcluster.securityGroupId
-        this.postgresport = dbcluster.dbInstanceEndpointPort
+        this.postgresport = useAurora ? (dbcluster as rds.DatabaseCluster).clusterEndpoint.port : (dbcluster as rds.DatabaseInstance).dbInstanceEndpointPort
 
         const redisSg = new SecurityGroup(this, "RedisSG", {
             allowAllOutbound: true,

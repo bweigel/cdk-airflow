@@ -1,3 +1,9 @@
 {
-  "app": "npx ts-node bin/cdk-airflow.ts"
+  "app": "npx ts-node bin/cdk-airflow.ts",
+  "context": {
+    "useaurora": false,
+    "vpcid": "vpc-01700...",
+    "azs": "eu-central-1a,eu-central-1b",
+    "privatesubnetids": "subnet-04436...,subnet-0a470..."
+  }
 }
